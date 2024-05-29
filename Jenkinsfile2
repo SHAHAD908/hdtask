@@ -26,6 +26,13 @@ pipeline {
             }
         }
 
+        stage('Cleanup Test') {
+            steps {
+                // Stop and remove the container used for testing
+                sh 'docker stop $(docker ps -q --filter "ancestor=my-website")'
+            }
+        }
+
         stage('Deploy with Docker Compose') {
             steps {
                 script {
