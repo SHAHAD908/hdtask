@@ -7,10 +7,10 @@ pipeline {
         stage('Scan') {
             steps {
                 script {
-                    // Check out the main branch where your mvnw script is located
-                    git branch: 'main', url: 'https://github.com/SHAHAD908/hdtask.git'
-                    
-                    // Run the SonarQube analysis using the mvnw script
+                    // Grant execute permissions to mvnw script
+                    sh 'chmod +x mvnw'
+
+                    // Run SonarQube analysis
                     withSonarQubeEnv('sq1') {
                         sh './mvnw clean org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar'
                     }
