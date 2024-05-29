@@ -9,6 +9,6 @@ services:
 
   my-app:
     image: my-app
-    # Any additional configurations as needed
     ports:
-      - 8081:80 # Map port 8081 of the host to port 80 of the container for the website
+      - 8081:80
+    # Any additional configurations as needed
