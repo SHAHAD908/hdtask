@@ -32,6 +32,20 @@ pipeline {
                 sh 'docker stop $(docker ps -q --filter "ancestor=my-website")'
             }
         }
+        
+        stage('Code Quality Analysis') {
+            steps {
+                script {
+                    // Grant execute permissions to mvnw script
+                    sh 'chmod +x mvnw'
+
+                    // Run SonarQube analysis
+                    withSonarQubeEnv('sq1') {
+                        sh './mvnw clean org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar'
+                    }
+                }
+            }
+        }
 
         stage('Deploy with Docker Compose') {
             steps {
@@ -50,20 +64,6 @@ pipeline {
 
                     // Check if containers are running
                     sh 'docker ps'
-                }
-            }
-        }
-        
-        stage('Code Quality Analysis') {
-            steps {
-                script {
-                    // Grant execute permissions to mvnw script
-                    sh 'chmod +x mvnw'
-
-                    // Run SonarQube analysis
-                    withSonarQubeEnv('sq1') {
-                        sh './mvnw clean org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar'
-                    }
                 }
             }
         }
