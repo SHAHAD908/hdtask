@@ -10,5 +10,5 @@ services:
   my-app:
     image: my-app
     ports:
-      - 8081:80
+      - 8090:80
     # Any additional configurations as needed
