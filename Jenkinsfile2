@@ -19,10 +19,10 @@ pipeline {
         stage('Test') {
             steps {
                 // Assume testing involves checking if the website is accessible and renders correctly
-                sh 'docker run --rm -d -p 8081:80 my-website' // Use port 8081 for the website
+                sh 'docker run --rm -d -p 8090:80 my-website'
                 sleep 10 // Wait for the container to start
-                sh 'curl http://localhost:8081' // Use port 8081 for the website
-                sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8081' // Use port 8081 for the website
+                sh 'curl http://localhost:8090'
+                sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8090'
             }
         }
 
