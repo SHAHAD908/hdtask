@@ -2,96 +2,56 @@ pipeline {
     agent any
 
     stages {
+        stage('Checkout Codebase') {
+            steps {
+                cleanWs()
+                git branch: 'main', url: 'https://github.com/SHAHAD908/hdtask.git'
+            }
+        }
+
         stage('Build') {
             steps {
-                echo 'Building...'
-                // Execute build tasks here
+                // Build Docker image for the website
+                sh 'docker build -t my-website -f src/Dockerfile .'
             }
         }
 
-        stage('Unit and Integration Tests') {
+        stage('Test') {
             steps {
-                echo 'Running unit tests using JUnit...'
-                echo 'Running integration tests using JUnit...'
-                // Simulate unit and integration tests
-            }
-            post {
-                success {
-                    mail to: 'almutirikholod1@gmail.com',
-                         subject: 'Tests Passed',
-                         body: 'All tests passed successfully.'
-                }
-                failure {
-                    mail to: 'almutirikholod1@gmail.com',
-                         subject: 'Test Failures',
-                         body: 'Some tests failed. Please review the test results.'
-                }
+                // Assume testing involves checking if the website is accessible and renders correctly
+                sh 'docker run --rm -d -p 8080:80 my-website'
+                sleep 10 // Wait for the container to start
+                sh 'curl http://localhost:8080'
+                sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080'
             }
         }
 
-        stage('Code Analysis') {
+        stage('Deploy with Docker Compose') {
             steps {
-                echo 'Performing code analysis. Executing SonarQube analysis using SonarScanner.'
-                // Execute code analysis tasks
-            }
-        }
+                script {
+                    // Ensure Docker Compose is installed
+                    sh 'docker compose version'
 
-        stage('Security Scan') {
-            steps {
-                echo 'Performing security scan using OWASP ZAP (Zed Attack Proxy)...'
-                // Perform security scan tasks
-            }
-            post {
-                success {
-                    mail to: 'almutirikholod1@gmail.com',
-                         subject: 'Security Scan Passed',
-                         body: 'No security vulnerabilities found.'
-                }
-                failure {
-                    mail to: 'almutirikholod1@gmail.com',
-                         subject: 'Security Scan Failed',
-                         body: 'Security vulnerabilities detected. Immediate action required.'
+                    // Start containers defined in docker-compose.yaml
+                    sh 'docker-compose up -d --no-color --wait'
+
+                    // Get the name of the container
+                    def containerName = sh(script: 'docker-compose ps -q echo-server', returnStdout: true).trim()
+
+                    // Print logs of the container
+                    sh "docker logs $containerName"
+
+                    // Stop and remove containers after deployment
+                    sh 'docker-compose down --remove-orphans -v'
                 }
             }
         }
+    }
 
-        stage('Deploy to Staging') {
-            steps {
-                echo 'Deploying the application to a staging server (e.g., AWS EC2 instance)'
-                // Deploy to staging tasks
-            }
-        }
-
-        stage('Integration Tests on Staging') {
-            steps {
-                echo 'Running integration tests on the staging environment...'
-                // Simulate integration tests on staging
-            }
-            post {
-                success {
-                    mail to: 'almutirikholod1@gmail.com',
-                         subject: 'Integration Tests on Staging Passed',
-                         body: 'Integration tests on staging passed successfully.'
-                }
-                failure {
-                    mail to: 'almutirikholod1@gmail.com',
-                         subject: 'Integration Tests on Staging Failed',
-                         body: 'Integration tests on staging failed. Further investigation needed.'
-                }
-            }
-        }
-
-        stage('Deploy to Production') {
-            steps {
-                echo 'Deploying the application to a production server (e.g., AWS EC2 instance)'
-                // Deploy to production tasks
-            }
-        }
-
-        stage('Adding a Commit') {
-            steps {
-                echo 'Successfully committed automatically.'
-            }
+    post {
+        always {
+            // Any cleanup or finalization steps here
+            echo 'Post-build cleanup...'
         }
     }
 }
