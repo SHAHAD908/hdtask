@@ -37,19 +37,19 @@ pipeline {
             steps {
                 script {
                     // Ensure Docker Compose is installed
-                    sh 'docker compose version'
+                    sh 'docker-compose version'
 
                     // Start containers defined in docker-compose.yaml
-                    sh 'docker-compose up -d --no-color --wait'
+                    sh 'docker-compose up -d --no-color --force-recreate'
 
-                    // Get the name of the container
-                    def containerName = sh(script: 'docker-compose ps -q echo-server', returnStdout: true).trim()
+                    // Wait for containers to start
+                    sleep 20
 
-                    // Print logs of the container
-                    sh "docker logs $containerName"
+                    // Print logs of the containers
+                    sh 'docker-compose logs'
 
-                    // Stop and remove containers after deployment
-                    sh 'docker-compose down --remove-orphans -v'
+                    // Check if containers are running
+                    sh 'docker ps'
                 }
             }
         }
