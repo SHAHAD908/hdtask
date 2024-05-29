@@ -12,7 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 // Build Docker image for the website
-                sh 'docker build -t my-website -f src/Dockerfile .'
+                sh 'docker build -t my-website -f Dockerfile .'
             }
         }
 
