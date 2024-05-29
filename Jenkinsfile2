@@ -2,40 +2,53 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout Codebase') {
             steps {
-                checkout scm
+                cleanWs()
+                git branch: 'main', url: 'https://github.com/SHAHAD908/hdtask.git'
             }
         }
+
         stage('Build') {
             steps {
+                // Build Docker image for the website
                 sh 'docker build -t my-website -f Dockerfile .'
             }
         }
+
         stage('Test') {
             steps {
+                // Assume testing involves checking if the website is accessible and renders correctly
                 sh 'docker run --rm -d -p 8090:80 my-website'
-                sleep time: 10, unit: 'SECONDS'
+                sleep 10 // Wait for the container to start
                 sh 'curl http://localhost:8090'
                 sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8090'
             }
         }
+
+        stage('Cleanup Test') {
+            steps {
+                // Stop and remove the container used for testing
+                sh 'docker stop $(docker ps -q --filter "ancestor=my-website")'
+            }
+        }
+
         stage('Deploy with Docker Compose') {
             steps {
                 script {
+                    // Ensure Docker Compose is installed
                     sh 'docker compose version'
-                    def result = sh(script: 'docker-compose up -d --no-color --force-recreate', returnStatus: true)
-                    echo "Docker Compose up result: ${result}"
 
-                    if (result != 0) {
-                        currentBuild.result = 'FAILURE'
-                        error('Deployment failed')
-                    }
+                    // Start containers defined in docker-compose.yaml
+                    sh 'docker-compose up -d --no-color --wait'
 
-                    def containerName = sh(script: 'docker-compose ps -q my-app', returnStdout: true).trim()
+                    // Get the name of the container
+                    def containerName = sh(script: 'docker-compose ps -q echo-server', returnStdout: true).trim()
+
+                    // Print logs of the container
                     sh "docker logs $containerName"
-                    def exitCode = sh(script: "docker inspect --format='{{.State.ExitCode}}' $containerName", returnStdout: true).trim()
-                    echo "Container exit code: $exitCode"
+
+                    // Stop and remove containers after deployment
                     sh 'docker-compose down --remove-orphans -v'
                 }
             }
@@ -44,6 +57,7 @@ pipeline {
 
     post {
         always {
+            // Any cleanup or finalization steps here
             echo 'Post-build cleanup...'
         }
     }
