@@ -35,11 +35,8 @@ pipeline {
                     // Start containers defined in docker-compose.yaml
                     sh 'docker-compose up -d --no-color --wait'
 
-                    // Get the name of the container
-                    def containerName = sh(script: 'docker-compose ps -q echo-server', returnStdout: true).trim()
-
                     // Print logs of the container
-                    sh "docker logs $containerName"
+                    sh 'docker-compose logs'
 
                     // Stop and remove containers after deployment
                     sh 'docker-compose down --remove-orphans -v'
