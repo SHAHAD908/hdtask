@@ -1,10 +1,60 @@
 pipeline {
     agent any
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '5'))
-    }
+
     stages {
-        stage('Scan') {
+        stage('Checkout Codebase') {
+            steps {
+                cleanWs()
+                git branch: 'main', url: 'https://github.com/SHAHAD908/hdtask.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // Build Docker image for the website
+                sh 'docker build -t my-website -f Dockerfile .'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Assume testing involves checking if the website is accessible and renders correctly
+                sh 'docker run --rm -d -p 8090:80 my-website'
+                sleep 10 // Wait for the container to start
+                sh 'curl http://localhost:8090'
+                sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8090'
+            }
+        }
+
+        stage('Cleanup Test') {
+            steps {
+                // Stop and remove the container used for testing
+                sh 'docker stop $(docker ps -q --filter "ancestor=my-website")'
+            }
+        }
+
+        stage('Deploy with Docker Compose') {
+            steps {
+                script {
+                    // Ensure Docker Compose is installed
+                    sh 'docker-compose version'
+
+                    // Start containers defined in docker-compose.yaml
+                    sh 'docker-compose up -d --no-color --force-recreate'
+
+                    // Wait for containers to start
+                    sleep 20
+
+                    // Print logs of the containers
+                    sh 'docker-compose logs'
+
+                    // Check if containers are running
+                    sh 'docker ps'
+                }
+            }
+        }
+        
+        stage('Code Quality Analysis') {
             steps {
                 script {
                     // Grant execute permissions to mvnw script
@@ -16,6 +66,13 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            // Any cleanup or finalization steps here
+            echo 'Post-build cleanup...'
         }
     }
 }
