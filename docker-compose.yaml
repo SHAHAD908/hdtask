@@ -8,5 +8,6 @@ services:
       - 3000:80
 
   my-app:
-    image: my-app
-    # Any additional configurations as needed
+    image: my-website
+    ports:
+      - 8080:80
