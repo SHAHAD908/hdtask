@@ -1,11 +1,14 @@
-# Use the official Maven image as the base
-FROM maven:latest
+# Use a lightweight web server as the base image
+FROM nginx:alpine
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /usr/share/nginx/html
 
-# Copy the source files into the container
+# Copy the website files into the container
 COPY src/ .
 
-# Command to run your application
-CMD ["java", "App"]
+# Expose port 80 to allow incoming HTTP traffic
+EXPOSE 80
+
+# Start the nginx server when the container starts
+CMD ["nginx", "-g", "daemon off;"]
